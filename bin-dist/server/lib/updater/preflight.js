@@ -1,0 +1,62 @@
+/**
+ * Preflight checks — verify the environment is ready for an update.
+ */
+import { execSync } from 'node:child_process';
+import { accessSync, constants } from 'node:fs';
+import { EXIT_CODES, UpdateError } from './types.js';
+const NODE_MIN_MAJOR = 22;
+/**
+ * Run all preflight checks. Throws UpdateError on any failure.
+ */
+export function runPreflight(cwd) {
+    const gitVersion = requireCommand('git --version', 'git').replace('git version ', '').trim();
+    const nodeVersionRaw = requireCommand('node --version', 'node').trim();
+    const npmVersion = requireCommand('npm --version', 'npm').trim();
+    // Validate Node.js version
+    const nodeVersion = nodeVersionRaw.replace(/^v/, '');
+    const major = parseInt(nodeVersion.split('.')[0], 10);
+    if (isNaN(major) || major < NODE_MIN_MAJOR) {
+        throw new UpdateError(`Node.js v${NODE_MIN_MAJOR}+ required, found v${nodeVersion}`, 'preflight', EXIT_CODES.PREFLIGHT);
+    }
+    // Verify cwd is a git repo
+    try {
+        execSync('git rev-parse --git-dir', { cwd, stdio: 'pipe' });
+    }
+    catch {
+        throw new UpdateError(`${cwd} is not a git repository`, 'preflight', EXIT_CODES.PREFLIGHT);
+    }
+    // Verify remote origin uses HTTPS
+    try {
+        const originUrl = execSync('git remote get-url origin', { cwd, stdio: 'pipe' }).toString().trim();
+        if (!originUrl.startsWith('https://')) {
+            throw new UpdateError(`Origin must use HTTPS (found: ${originUrl})\n  Fix: git remote set-url origin https://github.com/<owner>/<repo>.git`, 'preflight', EXIT_CODES.PREFLIGHT);
+        }
+    }
+    catch (err) {
+        if (err instanceof UpdateError)
+            throw err;
+        throw new UpdateError('Could not determine git remote URL', 'preflight', EXIT_CODES.PREFLIGHT);
+    }
+    // Check write permissions
+    try {
+        accessSync(cwd, constants.W_OK);
+    }
+    catch {
+        throw new UpdateError(`No write permission in ${cwd}`, 'preflight', EXIT_CODES.PREFLIGHT);
+    }
+    return {
+        gitVersion,
+        nodeVersion,
+        npmVersion,
+        isGitRepo: true,
+        hasWritePermission: true,
+    };
+}
+function requireCommand(cmd, name) {
+    try {
+        return execSync(cmd, { stdio: 'pipe' }).toString();
+    }
+    catch {
+        throw new UpdateError(`${name} not found — required for updates`, 'preflight', EXIT_CODES.PREFLIGHT);
+    }
+}

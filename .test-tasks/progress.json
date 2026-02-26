@@ -1,0 +1,12 @@
+{
+  "phases": {
+    "1-foundation": { "status": "done", "startedAt": "2026-02-26T11:20:00Z", "completedAt": "2026-02-26T11:27:00Z" },
+    "2-chat-core": { "status": "in-progress", "startedAt": "2026-02-26T11:27:00Z", "completedAt": null },
+    "3-server-api": { "status": "pending", "startedAt": null, "completedAt": null },
+    "4-client-components": { "status": "pending", "startedAt": null, "completedAt": null },
+    "5-validation-1": { "status": "pending", "startedAt": null, "completedAt": null },
+    "6-validation-2": { "status": "pending", "startedAt": null, "completedAt": null },
+    "7-validation-3": { "status": "pending", "startedAt": null, "completedAt": null },
+    "8-deslop": { "status": "pending", "startedAt": null, "completedAt": null }
+  }
+}
