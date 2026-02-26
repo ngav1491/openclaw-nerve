@@ -1,0 +1,299 @@
+/** Tests for the memories API routes. */
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { Hono } from 'hono';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+
+describe('memories routes', () => {
+  let tmpDir: string;
+  let memoryPath: string;
+  let memoryDir: string;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'memories-test-'));
+    memoryDir = path.join(tmpDir, 'memory');
+    memoryPath = path.join(tmpDir, 'MEMORY.md');
+    await fs.mkdir(memoryDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    vi.restoreAllMocks();
+    await fs.rm(tmpDir, { recursive: true, force: true });
+  });
+
+  async function buildApp() {
+    vi.doMock('../lib/config.js', () => ({
+      config: {
+        auth: false, port: 3000, host: '127.0.0.1', sslPort: 3443,
+        memoryPath,
+        memoryDir,
+      },
+      SESSION_COOKIE_NAME: 'nerve_session_3000',
+    }));
+    vi.doMock('../middleware/rate-limit.js', () => ({
+      rateLimitGeneral: vi.fn((_c: unknown, next: () => Promise<void>) => next()),
+    }));
+    vi.doMock('../lib/gateway-client.js', () => ({
+      invokeGatewayTool: vi.fn(async () => ({})),
+    }));
+    // Mock broadcast from events
+    vi.doMock('./events.js', () => ({
+      broadcast: vi.fn(),
+    }));
+
+    const mod = await import('./memories.js');
+    const app = new Hono();
+    app.route('/', mod.default);
+    return app;
+  }
+
+  describe('GET /api/memories', () => {
+    it('returns empty array when no memories exist', async () => {
+      const app = await buildApp();
+      const res = await app.request('/api/memories');
+      expect(res.status).toBe(200);
+      const json = (await res.json()) as Array<unknown>;
+      expect(Array.isArray(json)).toBe(true);
+      expect(json).toHaveLength(0);
+    });
+
+    it('parses sections and items from MEMORY.md', async () => {
+      await fs.writeFile(memoryPath, `# MEMORY.md
+
+## Preferences
+- Dark mode enabled
+- Timezone is UTC+3
+
+## Decisions
+- Use Hono over Express
+`);
+
+      const app = await buildApp();
+      const res = await app.request('/api/memories');
+      expect(res.status).toBe(200);
+      const json = (await res.json()) as Array<{ type: string; text: string }>;
+
+      const sections = json.filter(m => m.type === 'section');
+      expect(sections).toHaveLength(2);
+      expect(sections[0].text).toBe('Preferences');
+
+      const items = json.filter(m => m.type === 'item');
+      expect(items).toHaveLength(3);
+      expect(items[0].text).toBe('Dark mode enabled');
+    });
+
+    it('includes daily file entries', async () => {
+      await fs.writeFile(path.join(memoryDir, '2026-02-26.md'), `## Morning standup
+- Discussed roadmap
+`);
+
+      const app = await buildApp();
+      const res = await app.request('/api/memories');
+      const json = (await res.json()) as Array<{ type: string; text: string; date?: string }>;
+
+      const daily = json.filter(m => m.type === 'daily');
+      expect(daily.length).toBeGreaterThanOrEqual(1);
+      expect(daily[0].date).toBe('2026-02-26');
+      expect(daily[0].text).toBe('Morning standup');
+    });
+  });
+
+  describe('POST /api/memories', () => {
+    it('returns 400 when text is empty', async () => {
+      const app = await buildApp();
+      const res = await app.request('/api/memories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: '' }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('creates a new memory in MEMORY.md', async () => {
+      await fs.writeFile(memoryPath, '# MEMORY.md\n');
+      const app = await buildApp();
+      const res = await app.request('/api/memories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: 'Remember this fact', section: 'Facts' }),
+      });
+      expect(res.status).toBe(200);
+      const json = (await res.json()) as { ok: boolean; result: { written: boolean; section: string } };
+      expect(json.ok).toBe(true);
+      expect(json.result.section).toBe('Facts');
+
+      // Verify file was updated
+      const content = await fs.readFile(memoryPath, 'utf-8');
+      expect(content).toContain('## Facts');
+      expect(content).toContain('- Remember this fact');
+    });
+
+    it('uses "General" as default section', async () => {
+      await fs.writeFile(memoryPath, '# MEMORY.md\n');
+      const app = await buildApp();
+      await app.request('/api/memories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: 'No section specified' }),
+      });
+      const content = await fs.readFile(memoryPath, 'utf-8');
+      expect(content).toContain('## General');
+    });
+
+    it('appends to existing section', async () => {
+      await fs.writeFile(memoryPath, `# MEMORY.md
+
+## Facts
+- Existing fact
+`);
+      const app = await buildApp();
+      await app.request('/api/memories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: 'Another fact', section: 'Facts' }),
+      });
+      const content = await fs.readFile(memoryPath, 'utf-8');
+      expect(content).toContain('- Existing fact');
+      expect(content).toContain('- Another fact');
+    });
+  });
+
+  describe('DELETE /api/memories', () => {
+    it('returns 400 when query is empty', async () => {
+      const app = await buildApp();
+      const res = await app.request('/api/memories', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: '' }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('deletes an item from MEMORY.md', async () => {
+      await fs.writeFile(memoryPath, `# MEMORY.md
+
+## Preferences
+- Dark mode
+- Light mode
+`);
+      const app = await buildApp();
+      const res = await app.request('/api/memories', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: 'Dark mode', type: 'item' }),
+      });
+      expect(res.status).toBe(200);
+      const json = (await res.json()) as { ok: boolean; result: { deleted: number } };
+      expect(json.ok).toBe(true);
+      expect(json.result.deleted).toBe(1);
+
+      const content = await fs.readFile(memoryPath, 'utf-8');
+      expect(content).not.toContain('Dark mode');
+      expect(content).toContain('Light mode');
+    });
+
+    it('deletes a section from MEMORY.md', async () => {
+      await fs.writeFile(memoryPath, `# MEMORY.md
+
+## Section A
+- Item 1
+
+## Section B
+- Item 2
+`);
+      const app = await buildApp();
+      const res = await app.request('/api/memories', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: 'Section A', type: 'section' }),
+      });
+      expect(res.status).toBe(200);
+      const content = await fs.readFile(memoryPath, 'utf-8');
+      expect(content).not.toContain('Section A');
+      expect(content).toContain('Section B');
+    });
+
+    it('returns 404 when memory not found', async () => {
+      await fs.writeFile(memoryPath, '# MEMORY.md\n');
+      const app = await buildApp();
+      const res = await app.request('/api/memories', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: 'nonexistent item' }),
+      });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('GET /api/memories/section', () => {
+    it('returns section content', async () => {
+      await fs.writeFile(memoryPath, `# MEMORY.md
+
+## My Section
+- Item 1
+- Item 2
+`);
+      const app = await buildApp();
+      const res = await app.request('/api/memories/section?title=My%20Section');
+      expect(res.status).toBe(200);
+      const json = (await res.json()) as { ok: boolean; content: string };
+      expect(json.ok).toBe(true);
+      expect(json.content).toContain('Item 1');
+    });
+
+    it('returns 400 when title is missing', async () => {
+      const app = await buildApp();
+      const res = await app.request('/api/memories/section');
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 404 when section not found', async () => {
+      await fs.writeFile(memoryPath, '# MEMORY.md\n');
+      const app = await buildApp();
+      const res = await app.request('/api/memories/section?title=Nonexistent');
+      expect(res.status).toBe(404);
+    });
+
+    it('validates date format to prevent traversal', async () => {
+      const app = await buildApp();
+      const res = await app.request('/api/memories/section?title=Test&date=../../etc');
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe('PUT /api/memories/section', () => {
+    it('updates section content', async () => {
+      await fs.writeFile(memoryPath, `# MEMORY.md
+
+## Editable
+- Old content
+`);
+      const app = await buildApp();
+      const res = await app.request('/api/memories/section', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Editable', content: '- New content' }),
+      });
+      expect(res.status).toBe(200);
+      const json = (await res.json()) as { ok: boolean; result: { updated: boolean } };
+      expect(json.ok).toBe(true);
+
+      const content = await fs.readFile(memoryPath, 'utf-8');
+      expect(content).toContain('New content');
+      expect(content).not.toContain('Old content');
+    });
+
+    it('returns 404 when section not found', async () => {
+      await fs.writeFile(memoryPath, '# MEMORY.md\n');
+      const app = await buildApp();
+      const res = await app.request('/api/memories/section', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Missing', content: 'stuff' }),
+      });
+      expect(res.status).toBe(404);
+    });
+  });
+});
