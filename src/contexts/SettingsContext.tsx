@@ -95,6 +95,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const changeTtsProvider = useCallback((provider: TTSProvider) => {
     setTtsProvider(provider);
     localStorage.setItem('oc-tts-provider', provider);
+    // Reset model when switching providers — models are provider-specific
+    setTtsModelState('');
+    localStorage.setItem('oc-tts-model', '');
   }, []);
 
   const changeTtsModel = useCallback((model: string) => {
