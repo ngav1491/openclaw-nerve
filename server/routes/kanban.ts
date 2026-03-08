@@ -392,7 +392,7 @@ app.post('/api/kanban/tasks', rateLimitGeneral, async (c) => {
 // PATCH /api/kanban/tasks/:id
 app.patch('/api/kanban/tasks/:id', rateLimitGeneral, async (c) => {
   const store = getKanbanStore();
-  const id = c.req.param('id');
+  const id = c.req.param('id')!;
 
   let body: unknown;
   try {
@@ -439,7 +439,7 @@ app.patch('/api/kanban/tasks/:id', rateLimitGeneral, async (c) => {
 // DELETE /api/kanban/tasks/:id
 app.delete('/api/kanban/tasks/:id', rateLimitGeneral, async (c) => {
   const store = getKanbanStore();
-  const id = c.req.param('id');
+  const id = c.req.param('id')!;
 
   try {
     await store.deleteTask(id, 'operator');
@@ -455,7 +455,7 @@ app.delete('/api/kanban/tasks/:id', rateLimitGeneral, async (c) => {
 // POST /api/kanban/tasks/:id/reorder
 app.post('/api/kanban/tasks/:id/reorder', rateLimitGeneral, async (c) => {
   const store = getKanbanStore();
-  const id = c.req.param('id');
+  const id = c.req.param('id')!;
 
   let body: unknown;
   try {
@@ -612,7 +612,7 @@ app.post('/api/kanban/proposals', rateLimitGeneral, async (c) => {
 // POST /api/kanban/proposals/:id/approve
 app.post('/api/kanban/proposals/:id/approve', rateLimitGeneral, async (c) => {
   const store = getKanbanStore();
-  const id = c.req.param('id');
+  const id = c.req.param('id')!;
 
   try {
     const { proposal, task } = await store.approveProposal(id);
@@ -634,7 +634,7 @@ app.post('/api/kanban/proposals/:id/approve', rateLimitGeneral, async (c) => {
 // POST /api/kanban/proposals/:id/reject
 app.post('/api/kanban/proposals/:id/reject', rateLimitGeneral, async (c) => {
   const store = getKanbanStore();
-  const id = c.req.param('id');
+  const id = c.req.param('id')!;
 
   let body: unknown = {};
   try {
@@ -686,7 +686,7 @@ function handleWorkflowError(c: Context, err: unknown) {
 // POST /api/kanban/tasks/:id/execute
 app.post('/api/kanban/tasks/:id/execute', rateLimitGeneral, async (c) => {
   const store = getKanbanStore();
-  const id = c.req.param('id');
+  const id = c.req.param('id')!;
 
   let body: unknown = {};
   try {
@@ -748,7 +748,7 @@ app.post('/api/kanban/tasks/:id/execute', rateLimitGeneral, async (c) => {
 // POST /api/kanban/tasks/:id/approve
 app.post('/api/kanban/tasks/:id/approve', rateLimitGeneral, async (c) => {
   const store = getKanbanStore();
-  const id = c.req.param('id');
+  const id = c.req.param('id')!;
 
   let body: unknown = {};
   try {
@@ -777,7 +777,7 @@ app.post('/api/kanban/tasks/:id/approve', rateLimitGeneral, async (c) => {
 // POST /api/kanban/tasks/:id/reject
 app.post('/api/kanban/tasks/:id/reject', rateLimitGeneral, async (c) => {
   const store = getKanbanStore();
-  const id = c.req.param('id');
+  const id = c.req.param('id')!;
 
   let body: unknown;
   try {
@@ -805,7 +805,7 @@ app.post('/api/kanban/tasks/:id/reject', rateLimitGeneral, async (c) => {
 // POST /api/kanban/tasks/:id/abort
 app.post('/api/kanban/tasks/:id/abort', rateLimitGeneral, async (c) => {
   const store = getKanbanStore();
-  const id = c.req.param('id');
+  const id = c.req.param('id')!;
 
   let body: unknown = {};
   try {
@@ -841,7 +841,7 @@ const completeSchema = z.object({
 // POST /api/kanban/tasks/:id/complete
 app.post('/api/kanban/tasks/:id/complete', rateLimitGeneral, async (c) => {
   const store = getKanbanStore();
-  const id = c.req.param('id');
+  const id = c.req.param('id')!;
 
   let body: unknown = {};
   try {

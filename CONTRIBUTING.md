@@ -18,7 +18,7 @@ Thanks for wanting to help! This guide covers everything you need to start contr
 ### Prerequisites
 
 - **Node.js ≥ 22** — check with `node --version`
-- **npm** (bundled with Node)
+- **pnpm** — install with `npm install -g pnpm` or via [corepack](https://pnpm.io/installation)
 - A running [OpenClaw](https://github.com/openclaw/openclaw) gateway
 
 ### Steps
@@ -31,22 +31,22 @@ Thanks for wanting to help! This guide covers everything you need to start contr
 
 2. **Install dependencies:**
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. **Configure environment:**
    ```bash
-   npm run setup
+   pnpm run setup
    ```
    The interactive wizard auto-detects your gateway token and writes `.env`. Alternatively, copy `.env.example` to `.env` and fill in values manually.
 
 4. **Start development servers** (two terminals):
    ```bash
    # Terminal 1 — Vite frontend with HMR
-   npm run dev
+   pnpm run dev
 
    # Terminal 2 — Backend with file watching
-   npm run dev:server
+   pnpm run dev:server
    ```
 
 5. Open **http://localhost:3080**. The frontend proxies API requests to the backend on `:3081`.
@@ -128,9 +128,9 @@ nerve/
 Tests use [Vitest](https://vitest.dev) with jsdom for React component testing and [Testing Library](https://testing-library.com/docs/react-testing-library/intro) for assertions.
 
 ```bash
-npm test                  # Watch mode (re-runs on save)
-npm test -- --run         # Single run (CI-friendly)
-npm run test:coverage     # With V8 coverage report (text + HTML + lcov)
+pnpm test                  # Watch mode (re-runs on save)
+pnpm test -- --run         # Single run (CI-friendly)
+pnpm run test:coverage     # With V8 coverage report (text + HTML + lcov)
 ```
 
 ### Guidelines
@@ -145,7 +145,7 @@ npm run test:coverage     # With V8 coverage report (text + HTML + lcov)
 ESLint 9 with flat config. TypeScript-ESLint + React Hooks + React Refresh rules.
 
 ```bash
-npm run lint
+pnpm run lint
 ```
 
 Key rules:
@@ -185,10 +185,10 @@ test(voice): add wake-word persistence tests
 3. **Keep PRs focused** — one feature or fix per PR.
 4. **Ensure all checks pass** before requesting review:
    ```bash
-   npm run lint
-   npm run build
-   npm run build:server
-   npm test -- --run
+   pnpm run lint
+   pnpm run build
+   pnpm run build:server
+   pnpm test -- --run
    ```
 5. **Fill out the PR template** — describe what, why, and how.
 6. **Include tests** for new features. Bug fixes should include a regression test when feasible.

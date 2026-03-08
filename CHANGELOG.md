@@ -87,7 +87,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Updater now resolves the latest published GitHub release instead of defaulting to master HEAD (PR #45)
 
 ### Fixed
-- Server build (`build:server`) now included in `npm run build`; `npm run prod` runs both builds (PR #47 by @jamesjmartin)
+- Server build (`build:server`) now included in `pnpm run build`; `pnpm run prod` runs both builds (PR #47 by @jamesjmartin)
 - Memory collapse toggle: first click to expand no longer silently ignored due to key mismatch and nullish default (PR #62 by @jamesjmartin)
 - Kanban board columns scroll vertically when tasks overflow viewport (PR #63)
 - Switching TTS provider no longer sends the previous provider's model ID, which caused 400 errors

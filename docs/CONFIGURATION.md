@@ -9,10 +9,10 @@ Nerve is configured via a `.env` file in the project root. All variables have se
 The interactive setup wizard is the recommended way to configure Nerve:
 
 ```bash
-npm run setup               # Interactive setup (5 steps)
-npm run setup -- --check    # Validate existing config & test gateway
-npm run setup -- --defaults # Non-interactive with auto-detected values
-npm run setup -- --help     # Show help
+pnpm run setup               # Interactive setup (5 steps)
+pnpm run setup -- --check    # Validate existing config & test gateway
+pnpm run setup -- --defaults # Non-interactive with auto-detected values
+pnpm run setup -- --help     # Show help
 ```
 
 ### Wizard Steps
@@ -274,7 +274,7 @@ TTS_CACHE_MAX=500
 
 ### Updater State
 
-The updater stores state in `~/.nerve/updater/`. These are not configurable via env vars — they're managed automatically by `npm run update`.
+The updater stores state in `~/.nerve/updater/`. These are not configurable via env vars — they're managed automatically by `pnpm run update`.
 
 | Path | Purpose |
 |------|---------|

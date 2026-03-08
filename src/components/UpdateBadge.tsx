@@ -71,7 +71,7 @@ export function UpdateBadge() {
                 Run this from the Nerve project directory:
               </p>
               <pre className="bg-secondary rounded-md px-3 py-2 text-sm font-mono select-all">
-                npm run update -- --yes
+                pnpm run update -- --yes
               </pre>
             </div>
             <div className="text-xs text-muted-foreground space-y-1">
@@ -82,10 +82,10 @@ export function UpdateBadge() {
               <p className="text-xs text-muted-foreground mb-1">Other options:</p>
               <pre className="bg-secondary rounded-md px-3 py-2 text-xs font-mono text-muted-foreground whitespace-pre-wrap">
 {`# Preview first
-npm run update -- --dry-run
+pnpm run update -- --dry-run
 
 # Pin to a specific version
-npm run update -- --version v${versionInfo.latest} --yes
+pnpm run update -- --version v${versionInfo.latest} --yes
 
 # See full docs
 cat docs/UPDATING.md`}

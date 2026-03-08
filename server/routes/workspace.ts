@@ -36,7 +36,7 @@ function resolveFile(key: string): string | null {
 }
 
 app.get('/api/workspace/:key', rateLimitGeneral, async (c) => {
-  const filePath = resolveFile(c.req.param('key'));
+  const filePath = resolveFile(c.req.param('key')!);
   if (!filePath) return c.json({ ok: false, error: 'Unknown file key' }, 400);
 
   try {
@@ -50,7 +50,7 @@ app.get('/api/workspace/:key', rateLimitGeneral, async (c) => {
 });
 
 app.put('/api/workspace/:key', rateLimitGeneral, async (c) => {
-  const filePath = resolveFile(c.req.param('key'));
+  const filePath = resolveFile(c.req.param('key')!);
   if (!filePath) return c.json({ ok: false, error: 'Unknown file key' }, 400);
 
   const body = await c.req.json<{ content: string }>();

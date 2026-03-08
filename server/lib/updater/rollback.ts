@@ -44,7 +44,7 @@ export async function rollback(
       try {
         rmSync(nodeModulesPath, { recursive: true, force: true });
       } catch {
-        // Fall back to npm ci behavior — npm install will reconcile
+        // Fall back to pnpm install behavior — pnpm install will reconcile
         reporter.verbose('Could not remove node_modules, proceeding anyway');
       }
     }

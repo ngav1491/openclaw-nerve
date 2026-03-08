@@ -216,7 +216,7 @@ export function validateConfig(): void {
     console.warn(
       '\n  \x1b[33m⚠ GATEWAY_TOKEN is not set\x1b[0m\n' +
       '  Gateway API calls (memories, models, session info) will fail.\n' +
-      '  Run \x1b[36mnpm run setup\x1b[0m to configure, or set GATEWAY_TOKEN in .env\n',
+      '  Run \x1b[36mpnpm run setup\x1b[0m to configure, or set GATEWAY_TOKEN in .env\n',
     );
   }
 
@@ -224,7 +224,7 @@ export function validateConfig(): void {
   if (config.auth && !config.passwordHash && !config.gatewayToken) {
     console.error(
       '\n  \x1b[31m✗ NERVE_AUTH is enabled but no password or gateway token is configured.\x1b[0m\n' +
-      '  Run \x1b[36mnpm run setup\x1b[0m to set a password, or set GATEWAY_TOKEN as a fallback.\n',
+      '  Run \x1b[36mpnpm run setup\x1b[0m to set a password, or set GATEWAY_TOKEN as a fallback.\n',
     );
   }
 
@@ -240,14 +240,14 @@ export function validateConfig(): void {
       console.warn(
         '\n  \x1b[33m⚠ INSECURE MODE: Server binds to 0.0.0.0 with authentication DISABLED.\x1b[0m\n' +
         '  All API endpoints are accessible from the network without a password.\n' +
-        '  This is dangerous. Run \x1b[36mnpm run setup\x1b[0m to enable authentication.\n',
+        '  This is dangerous. Run \x1b[36mpnpm run setup\x1b[0m to enable authentication.\n',
       );
     } else {
       console.error(
         '\n  \x1b[31m✗ Refusing to start: HOST=0.0.0.0 with authentication disabled.\x1b[0m\n' +
         '  This would expose all API endpoints (files, memory, API keys) to the network.\n\n' +
         '  To fix, either:\n' +
-        '    1. Enable auth:  \x1b[36mnpm run setup\x1b[0m\n' +
+        '    1. Enable auth:  \x1b[36mpnpm run setup\x1b[0m\n' +
         '    2. Bind locally: \x1b[36mHOST=127.0.0.1\x1b[0m in .env\n' +
         '    3. Override:     \x1b[36mNERVE_ALLOW_INSECURE=true\x1b[0m in .env (NOT recommended)\n',
       );

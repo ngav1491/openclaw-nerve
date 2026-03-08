@@ -53,7 +53,7 @@ export async function orchestrate(options: UpdateOptions, reporter: Reporter): P
     const preflight = runPreflight(options.cwd);
     reporter.ok(`git ${preflight.gitVersion}`);
     reporter.ok(`Node.js v${preflight.nodeVersion}`);
-    reporter.ok(`npm ${preflight.npmVersion}`);
+    reporter.ok(`pnpm ${preflight.pnpmVersion}`);
 
     // ── 3. Resolve version ─────────────────────────────────────────
     stageNum++;
@@ -77,7 +77,7 @@ export async function orchestrate(options: UpdateOptions, reporter: Reporter): P
     if (options.dryRun) {
       reporter.dry('Would snapshot current state');
       reporter.dry(`Would checkout ${resolved.tag}`);
-      reporter.dry('Would run npm install && build');
+      reporter.dry('Would run pnpm install && build');
       if (!options.noRestart) {
         reporter.dry('Would restart service');
         reporter.dry('Would run health checks');
@@ -116,7 +116,7 @@ export async function orchestrate(options: UpdateOptions, reporter: Reporter): P
     // ── 7. Build ───────────────────────────────────────────────────
     stageNum++;
     reporter.stage('Building', stageNum, totalStages);
-    reporter.verbose('npm install && npm run build && npm run build:server');
+    reporter.verbose('pnpm install && pnpm run build && pnpm run build:server');
     buildProject(options.cwd);
     reporter.ok('Build complete');
 
@@ -148,7 +148,7 @@ export async function orchestrate(options: UpdateOptions, reporter: Reporter): P
       } else {
         reporter.warn('No service manager detected — skipping restart');
         reporter.hint('Start the server manually:');
-        reporter.cmd('npm start');
+        reporter.cmd('pnpm start');
       }
 
       stageNum++;
@@ -218,9 +218,9 @@ async function handleFailure(
   // Helpful hints based on failure stage
   if (stage === 'build') {
     reporter.hint('Troubleshooting:');
-    reporter.cmd('npm install');
-    reporter.cmd('npm run build');
-    reporter.cmd('npm run build:server');
+    reporter.cmd('pnpm install');
+    reporter.cmd('pnpm run build');
+    reporter.cmd('pnpm run build:server');
   } else if (stage === 'restart' || stage === 'health') {
     if (serviceManager) {
       reporter.hint('Check service logs:');

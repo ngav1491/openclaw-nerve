@@ -5,15 +5,15 @@ Nerve ships a built-in updater that pulls the latest published release from GitH
 ## Quick start
 
 ```bash
-npm run update -- --yes
+pnpm run update -- --yes
 ```
 
 This will:
-1. Check prerequisites (git, Node.js, npm)
+1. Check prerequisites (git, Node.js, pnpm)
 2. Resolve the latest published GitHub release (fallback: latest semver tag)
 3. Snapshot the current state for rollback
 4. `git fetch --tags && git checkout <tag>`
-5. `npm install && npm run build && npm run build:server`
+5. `pnpm install && pnpm run build && pnpm run build:server`
 6. Restart the systemd/launchd service
 7. Verify `/health` and `/api/version` match the target
 
@@ -33,16 +33,16 @@ This will:
 
 ```bash
 # Preview what an update would do
-npm run update -- --dry-run
+pnpm run update -- --dry-run
 
 # Update to a specific version
-npm run update -- --version v1.4.0 --yes
+pnpm run update -- --version v1.4.0 --yes
 
 # Rollback to the previous version
-npm run update -- --rollback
+pnpm run update -- --rollback
 
 # Update without restarting (e.g. to restart manually)
-npm run update -- --yes --no-restart
+pnpm run update -- --yes --no-restart
 ```
 
 ## Exit codes
@@ -51,9 +51,9 @@ npm run update -- --yes --no-restart
 |------|---------|
 | 0 | Success |
 | 1 | Already up to date |
-| 10 | Preflight failure (missing git/node/npm) |
+| 10 | Preflight failure (missing git/node/pnpm) |
 | 20 | Version resolution failure (release/tag not found) |
-| 40 | Build failure (npm install or build step) |
+| 40 | Build failure (pnpm install or build step) |
 | 50 | Service restart failure |
 | 60 | Health check failure (service unhealthy or version mismatch) |
 | 70 | Rollback failure (critical — manual intervention needed) |
@@ -65,7 +65,7 @@ npm run update -- --yes --no-restart
 
 ```
 lock → preflight → resolve → confirm → snapshot → git checkout
-  → npm install + build → restart → health check → done
+  → pnpm install + build → restart → health check → done
 ```
 
 Each stage has a dedicated exit code. If any stage after snapshot fails, the updater attempts an automatic rollback.
@@ -87,7 +87,7 @@ Rollback restores the snapshot ref, cleans `node_modules`, rebuilds, and restart
 The rollback flow:
 1. `git checkout --force <snapshot-ref>`
 2. Remove `node_modules` (clean slate)
-3. `npm install && npm run build && npm run build:server`
+3. `pnpm install && pnpm run build && pnpm run build:server`
 4. Restart and verify the service
 
 ### Health checks
@@ -163,12 +163,12 @@ curl http://127.0.0.1:3080/api/version
 
 ### Build failure after checkout
 
-`npm install` or `npm run build` failed on the new version.
+`pnpm install` or `pnpm run build` failed on the new version.
 
 **Fix:** The updater will attempt automatic rollback. If rollback also fails (exit 70), restore manually:
 ```bash
 cat ~/.nerve/updater/last-good.json           # Get the snapshot ref
 git checkout --force <ref>
-npm install && npm run build && npm run build:server
+pnpm install && pnpm run build && pnpm run build:server
 systemctl restart nerve
 ```

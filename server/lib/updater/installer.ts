@@ -1,5 +1,5 @@
 /**
- * Git checkout + npm install + build.
+ * Git checkout + pnpm install + build.
  */
 
 import { execSync } from 'node:child_process';
@@ -48,13 +48,13 @@ export function gitCheckoutLocal(cwd: string, ref: string): void {
 }
 
 /**
- * Run npm install, then build client and server.
+ * Run pnpm install, then build client and server.
  */
 export function buildProject(cwd: string): void {
   const steps: [string, string][] = [
-    ['npm install', 'npm install failed'],
-    ['npm run build', 'Client build failed'],
-    ['npm run build:server', 'Server build failed'],
+    ['pnpm install', 'pnpm install failed'],
+    ['pnpm run build', 'Client build failed'],
+    ['pnpm run build:server', 'Server build failed'],
   ];
 
   for (const [cmd, label] of steps) {

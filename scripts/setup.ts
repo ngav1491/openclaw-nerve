@@ -3,9 +3,9 @@
  * Guides users through first-time configuration.
  *
  * Usage:
- *   npm run setup               # Interactive setup
- *   npm run setup -- --check    # Validate existing config
- *   npm run setup -- --defaults # Non-interactive with defaults
+ *   pnpm run setup               # Interactive setup
+ *   pnpm run setup -- --check    # Validate existing config
+ *   pnpm run setup -- --defaults # Non-interactive with defaults
  */
 
 /** Mask a token for display, with a guard for short tokens. */
@@ -200,7 +200,7 @@ function installBundledSkills(): void {
 async function main(): Promise<void> {
   if (isHelp) {
     console.log(`
-  Usage: npm run setup [options]
+  Usage: pnpm run setup [options]
 
   Options:
     --check      Validate existing .env config and test gateway connection
@@ -216,9 +216,9 @@ async function main(): Promise<void> {
     6. Advanced Settings  — custom file paths (most users skip this)
 
   Examples:
-    npm run setup               # Interactive setup
-    npm run setup -- --check    # Validate existing config
-    npm run setup -- --defaults # Auto-configure with detected values
+    pnpm run setup               # Interactive setup
+    pnpm run setup -- --check    # Validate existing config
+    pnpm run setup -- --defaults # Auto-configure with detected values
 `);
     return;
   }
@@ -410,7 +410,7 @@ async function collectInteractive(
     });
     if (!proceed) {
       console.log('\n  Start your gateway with: \x1b[36mopenclaw gateway start\x1b[0m');
-      console.log('  Then re-run: \x1b[36mnpm run setup\x1b[0m\n');
+      console.log('  Then re-run: \x1b[36mpnpm run setup\x1b[0m\n');
       process.exit(1);
     }
   }
@@ -727,7 +727,7 @@ async function collectInteractive(
         success('Authentication enabled — your gateway token can be used as a password.');
       } else {
         warn('No password set and no gateway token. Authentication disabled.');
-        dim('Run `npm run setup` again to set a password.');
+        dim('Run `pnpm run setup` again to set a password.');
       }
     }
   } else {
@@ -890,8 +890,8 @@ function printNextSteps(config: EnvConfig): void {
   const port = config.PORT || DEFAULTS.PORT;
   console.log('');
   console.log('  \x1b[1mNext steps:\x1b[0m');
-  console.log(`    Development:   \x1b[36mnpm run dev\x1b[0m && \x1b[36mnpm run dev:server\x1b[0m`);
-  console.log(`    Production:    \x1b[36mnpm run prod\x1b[0m`);
+  console.log(`    Development:   \x1b[36mpnpm run dev\x1b[0m && \x1b[36mpnpm run dev:server\x1b[0m`);
+  console.log(`    Production:    \x1b[36mpnpm run prod\x1b[0m`);
   console.log('');
   console.log(`  Open \x1b[36mhttp://localhost:${port}\x1b[0m in your browser.`);
   console.log('');
@@ -980,7 +980,7 @@ async function runCheck(config: EnvConfig): Promise<void> {
     }
   } else if (host === '0.0.0.0') {
     warn('Authentication is DISABLED while server is network-exposed');
-    dim('Run `npm run setup` to enable authentication');
+    dim('Run `pnpm run setup` to enable authentication');
   } else {
     info('Authentication disabled (localhost-only — OK)');
   }
@@ -994,7 +994,7 @@ async function runCheck(config: EnvConfig): Promise<void> {
 
   console.log('');
   if (errors > 0) {
-    fail(`${errors} issue(s) found. Run \x1b[36mnpm run setup\x1b[0m to fix.`);
+    fail(`${errors} issue(s) found. Run \x1b[36mpnpm run setup\x1b[0m to fix.`);
     process.exit(1);
   } else {
     success('Configuration looks good!');

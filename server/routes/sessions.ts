@@ -76,7 +76,7 @@ async function readModelFromTranscript(filePath: string): Promise<string | null>
 }
 
 app.get('/api/sessions/:id/model', rateLimitGeneral, async (c) => {
-  const sessionId = c.req.param('id');
+  const sessionId = c.req.param('id')!;
 
   // Basic validation — session IDs are UUIDs
   if (!/^[0-9a-f-]{36}$/.test(sessionId)) {

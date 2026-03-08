@@ -25,21 +25,23 @@
   "scripts": {
     "dev": "vite",
     "dev:server": "tsx watch server/index.ts",
-    "build": "tsc -b && vite build && npm run build:server",
+    "build": "tsc -b && vite build && pnpm run build:server",
     "build:server": "tsc -p config/tsconfig.server.json --outDir server-dist --noEmit false --declaration false && tsc -p config/tsconfig.bin.json",
     "update": "node bin-dist/bin/nerve-update.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "node server-dist/index.js",
     "start:server": "tsx server/index.ts",
-    "prod": "npm run build && node server-dist/index.js",
+    "prod": "pnpm run build && node server-dist/index.js",
     "setup": "tsx scripts/setup.ts",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
-    "postinstall": "node -e \"try{require('fs').accessSync('.env')}catch{console.log('\\n  Run \\x1b[33mnpm run setup\\x1b[0m to configure Nerve.\\n')}\""
+    "postinstall": "node -e \"try{require('fs').accessSync('.env')}catch{console.log('\\n  Run \\x1b[33mpnpm run setup\\x1b[0m to configure Nerve.\\n')}\""
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.2",
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-html": "^6.4.11",
     "@codemirror/lang-javascript": "^6.2.4",
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-markdown": "^6.5.0",
@@ -56,6 +58,7 @@
     "@fugood/whisper.node": "^1.0.16",
     "@hono/node-server": "^1.19.9",
     "@hono/zod-validator": "^0.7.6",
+    "@lezer/highlight": "^1.2.3",
     "@tailwindcss/vite": "^4.1.18",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -104,5 +107,13 @@
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",
     "vitest": "^4.0.18"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@fugood/whisper.node",
+      "esbuild",
+      "msw",
+      "node-pty"
+    ]
   }
 }

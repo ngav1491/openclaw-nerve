@@ -158,7 +158,7 @@ export function describeToolUse(toolName: string, input: Record<string, unknown>
       cmd = redactSecrets(cmd);
       const project = extractProjectName(p.workdir as string);
       
-      if (cmd.includes('npm install') || cmd.includes('pip install') || cmd.includes('apt install') || cmd.includes('apt-get install'))
+      if (cmd.includes('pnpm install') || cmd.includes('npm install') || cmd.includes('pip install') || cmd.includes('apt install') || cmd.includes('apt-get install'))
         return withProject('installing: ' + cmd.replace(/.*install\s+(-\w+\s+)*/, '').split(/\s/)[0], project);
       if (cmd.includes('bunx ')) return withProject('running: ' + (cmd.match(/bunx\s+(\S+)/)?.[1] || cmd.slice(0, 40)), project);
       if (cmd.includes('curl')) return 'fetching URL';
@@ -166,11 +166,11 @@ export function describeToolUse(toolName: string, input: Record<string, unknown>
       if (cmd.includes('git ')) return withProject('git ' + cmd.replace(/.*git\s+/, '').split(/\s/)[0], project);
       if (cmd.startsWith('cd ') && cmd.includes('node ')) return 'restarting server';
       if (cmd.includes('python3')) return withProject('running python script', project);
-      if (cmd.includes('npm run build')) return withProject('building', project);
-      if (cmd.includes('npm run lint')) return withProject('linting', project);
-      if (cmd.includes('npm run ')) {
-        const script = cmd.match(/npm run\s+(\S+)/)?.[1] || '';
-        return withProject('npm run ' + script, project);
+      if (cmd.includes('pnpm run build') || cmd.includes('npm run build')) return withProject('building', project);
+      if (cmd.includes('pnpm run lint') || cmd.includes('npm run lint')) return withProject('linting', project);
+      if (cmd.includes('pnpm run ') || cmd.includes('npm run ')) {
+        const script = cmd.match(/(?:pnpm|npm) run\s+(\S+)/)?.[1] || '';
+        return withProject((cmd.includes('pnpm') ? 'pnpm' : 'npm') + ' run ' + script, project);
       }
       const short = cmd.split('&&')[0].split('|')[0].trim();
       if (/^(grep|find)\s/.test(short)) return withProject('searching files', project);

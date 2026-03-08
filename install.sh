@@ -363,16 +363,16 @@ check_node() {
   fi
 }
 
-check_npm() {
-  if command -v npm &>/dev/null; then
-    ok "npm $(npm -v 2>/dev/null)"
+check_pnpm() {
+  if command -v pnpm &>/dev/null; then
+    ok "pnpm $(pnpm -v 2>/dev/null)"
   else
-    fail "npm not found — it ships with Node.js"
+    fail "pnpm not found — required for Nerve project management"
     echo ""
-    hint "Reinstall Node.js to get npm:"
-    cmd "nvm install ${NODE_MIN}"
+    hint "Install pnpm:"
+    cmd "npm install -g pnpm"
     echo ""
-    echo -e "  ${RAIL}  ${DIM}If using a system package, npm may be separate: sudo apt install npm${NC}"
+    echo -e "  ${RAIL}  ${DIM}Or: curl -fsSL https://get.pnpm.io/install.sh | sh -${NC}"
     echo ""
     exit 1
   fi
@@ -495,7 +495,7 @@ check_gateway() {
 stage "Prerequisites"
 
 check_node
-check_npm
+check_pnpm
 check_git
 check_build_tools
 check_openclaw
@@ -574,13 +574,13 @@ fi
 stage "Install & Build"
 
 if [[ "$DRY_RUN" == "true" ]]; then
-  dry "Would run: npm ci"
-  dry "Would run: npm run build"
-  dry "Would run: npm run build:server"
+  dry "Would run: pnpm install --frozen-lockfile"
+  dry "Would run: pnpm run build"
+  dry "Would run: pnpm run build:server"
 else
-  npm_log=$(mktemp /tmp/nerve-npm-install-XXXXXX)
+  pnpm_log=$(mktemp /tmp/nerve-pnpm-install-XXXXXX)
 
-  run_with_dots "Installing dependencies" bash -c "npm ci --loglevel=error > '$npm_log' 2>&1"
+  run_with_dots "Installing dependencies" bash -c "pnpm install --frozen-lockfile > '$pnpm_log' 2>&1"
   if [[ $RWD_EXIT -eq 0 ]]; then
     ok "Dependencies installed"
 
@@ -593,22 +593,22 @@ else
       [[ -d server-dist ]] && cp -a server-dist "$BUILD_BACKUP/server-dist"
     fi
   else
-    fail "npm ci failed"
+    fail "pnpm install failed"
     echo ""
     # Show the last meaningful lines
     echo -e "  ${RAIL}  ${DIM}── Last 10 lines ──${NC}"
-    tail -10 "$npm_log" | while IFS= read -r line; do
+    tail -10 "$pnpm_log" | while IFS= read -r line; do
       echo -e "  ${RAIL}  ${DIM}${line}${NC}"
     done
-    echo -e "  ${RAIL}  ${DIM}── Full log: ${npm_log} ──${NC}"
+    echo -e "  ${RAIL}  ${DIM}── Full log: ${pnpm_log} ──${NC}"
     echo ""
     # Detect common failure patterns and suggest fixes
-    if grep -qi 'EACCES\|permission denied' "$npm_log"; then
+    if grep -qi 'EACCES\|permission denied' "$pnpm_log"; then
       hint "Permissions issue — try installing Node via nvm instead of system packages:"
       cmd "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash"
       cmd "nvm install ${NODE_MIN}"
       echo -e "  ${RAIL}  ${DIM}nvm installs to your home directory — no sudo needed${NC}"
-    elif grep -qi 'node-gyp\|gyp ERR\|make.*Error\|g++.*not found\|cc.*not found' "$npm_log"; then
+    elif grep -qi 'node-gyp\|gyp ERR\|make.*Error\|g++.*not found\|cc.*not found' "$pnpm_log"; then
       hint "Native module compilation failed — install build tools:"
       if $IS_MAC; then
         cmd "xcode-select --install"
@@ -619,15 +619,15 @@ else
       else
         cmd "sudo apt install build-essential"
       fi
-    elif grep -qi 'ERESOLVE\|peer dep\|could not resolve' "$npm_log"; then
+    elif grep -qi 'ERESOLVE\|peer dep\|could not resolve' "$pnpm_log"; then
       hint "Dependency conflict — try with a clean slate:"
-      cmd "rm -rf node_modules package-lock.json"
-      cmd "npm install"
+      cmd "rm -rf node_modules pnpm-lock.yaml"
+      cmd "pnpm install"
     else
       hint "Troubleshooting:"
-      echo -e "  ${RAIL}  ${DIM}1. Check the full log: cat ${npm_log}${NC}"
+      echo -e "  ${RAIL}  ${DIM}1. Check the full log: cat ${pnpm_log}${NC}"
       echo -e "  ${RAIL}  ${DIM}2. Ensure Node ${NODE_MIN}+ and build tools are installed${NC}"
-      echo -e "  ${RAIL}  ${DIM}3. Try: rm -rf node_modules && npm install${NC}"
+      echo -e "  ${RAIL}  ${DIM}3. Try: rm -rf node_modules && pnpm install${NC}"
     fi
     echo ""
     exit 1
@@ -635,7 +635,7 @@ else
 
   build_log=$(mktemp /tmp/nerve-build-XXXXXX)
 
-  run_with_dots "Building client" bash -c "npm run build > '$build_log' 2>&1"
+  run_with_dots "Building client" bash -c "pnpm run build > '$build_log' 2>&1"
   if [[ $RWD_EXIT -eq 0 ]]; then
     ok "Client built"
   else
@@ -656,12 +656,12 @@ else
     echo ""
     hint "Troubleshooting:"
     echo -e "  ${RAIL}  ${DIM}1. Check the full log: cat ${build_log}${NC}"
-    echo -e "  ${RAIL}  ${DIM}2. Try rebuilding: npm run build${NC}"
+    echo -e "  ${RAIL}  ${DIM}2. Try rebuilding: pnpm run build${NC}"
     echo ""
     exit 1
   fi
 
-  run_with_dots "Building server" bash -c "npm run build:server >> '$build_log' 2>&1"
+  run_with_dots "Building server" bash -c "pnpm run build:server >> '$build_log' 2>&1"
   if [[ $RWD_EXIT -eq 0 ]]; then
     ok "Server built"
   else
@@ -682,13 +682,13 @@ else
     echo ""
     hint "Troubleshooting:"
     echo -e "  ${RAIL}  ${DIM}1. Check the full log: cat ${build_log}${NC}"
-    echo -e "  ${RAIL}  ${DIM}2. Try rebuilding: npm run build:server${NC}"
+    echo -e "  ${RAIL}  ${DIM}2. Try rebuilding: pnpm run build:server${NC}"
     echo ""
     exit 1
   fi
 
   # Clean up temp logs on success
-  rm -f "$npm_log" "$build_log" 2>/dev/null
+  rm -f "$pnpm_log" "$build_log" 2>/dev/null
 
   # ── Download speech model (for local voice input) ──────────────────
   # Keep installer bootstrap in sync with UI/server default (multilingual base).
@@ -813,7 +813,7 @@ ENVEOF
     ok "Generated .env from OpenClaw gateway config"
   else
     warn "Cannot auto-generate .env — no gateway token found"
-    warn "Run: ${CYAN}npm run setup${NC} to configure manually"
+    warn "Run: ${CYAN}pnpm run setup${NC} to configure manually"
     ENV_MISSING=true
   fi
 }
@@ -844,17 +844,17 @@ else
         if read -r answer < /dev/tty 2>/dev/null; then
           if [[ "$(echo "$answer" | tr "[:upper:]" "[:lower:]")" == "y" ]]; then
             echo ""
-            NERVE_INSTALLER=1 npm run setup < /dev/tty 2>/dev/null || {
-              warn "Setup wizard failed (no TTY?) — run ${CYAN}npm run setup${NC} manually"
+            NERVE_INSTALLER=1 pnpm run setup < /dev/tty 2>/dev/null || {
+              warn "Setup wizard failed (no TTY?) — run ${CYAN}pnpm run setup${NC} manually"
             }
           else
             ok "Keeping existing configuration"
           fi
         else
-          warn "Cannot read input — run ${CYAN}npm run setup${NC} manually to reconfigure"
+          warn "Cannot read input — run ${CYAN}pnpm run setup${NC} manually to reconfigure"
         fi
       else
-        NERVE_INSTALLER=1 npm run setup < /dev/tty 2>/dev/null || {
+        NERVE_INSTALLER=1 pnpm run setup < /dev/tty 2>/dev/null || {
           warn "Setup wizard failed — attempting auto-config from gateway..."
           generate_env_from_gateway
         }
@@ -964,7 +964,7 @@ EOF
     else
       systemctl daemon-reload
       systemctl enable nerve.service &>/dev/null
-      ok "Systemd service installed (not started — run ${CYAN}npm run setup${NC} first, then ${CYAN}systemctl start nerve.service${NC})"
+      ok "Systemd service installed (not started — run ${CYAN}pnpm run setup${NC} first, then ${CYAN}systemctl start nerve.service${NC})"
     fi
   else
     echo ""
@@ -1086,7 +1086,7 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
         if [[ "$(echo "$answer" | tr "[:upper:]" "[:lower:]")" != "n" ]]; then
           setup_launchd
         else
-          ok "Skipped — start manually with: npm start"
+          ok "Skipped — start manually with: pnpm start"
         fi
       else
         info "Cannot read input — installing launchd service by default"
@@ -1124,7 +1124,7 @@ elif command -v systemctl &>/dev/null; then
         if [[ "$(echo "$answer" | tr "[:upper:]" "[:lower:]")" != "n" ]]; then
           setup_systemd
         else
-          ok "Skipped — start manually with: npm start"
+          ok "Skipped — start manually with: pnpm start"
         fi
       else
         info "Cannot read input — installing systemd service by default"
@@ -1194,7 +1194,7 @@ else
     echo -e "     ${DIM}Restart:   sudo systemctl restart nerve.service${NC}"
     echo -e "     ${DIM}Logs:      sudo journalctl -u nerve.service -f${NC}"
   else
-    echo -e "     ${DIM}Start:     cd ${INSTALL_DIR} && npm start${NC}"
+    echo -e "     ${DIM}Start:     cd ${INSTALL_DIR} && pnpm start${NC}"
   fi
 fi
 echo ""
@@ -1202,7 +1202,7 @@ echo ""
 # Exit code reflects actual readiness
 if [[ "$ENV_MISSING" == "true" ]] || [[ ! -f "${INSTALL_DIR}/.env" ]]; then
   warn "Install complete but Nerve is not fully configured"
-  info "Run: cd ${INSTALL_DIR} && npm run setup"
+  info "Run: cd ${INSTALL_DIR} && pnpm run setup"
   exit 2  # partial success — installed but non-functional
 fi
 exit 0

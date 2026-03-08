@@ -82,8 +82,8 @@ The script runs these checks in order:
 - Verifies major version is `>=22`.
 - On failure, prints targeted upgrade guidance (nvm/Homebrew/etc.) and exits.
 
-### 1.2 `check_npm`
-- Verifies `npm` exists.
+### 1.2 `check_pnpm`
+- Verifies `pnpm` exists.
 - If missing, explains reinstall path and exits.
 
 ### 1.3 `check_git`
@@ -137,8 +137,8 @@ The installer resolves a target ref before clone/update:
 
 ## 3) Stage 3/5 — Install & Build
 
-### 3.1 Dependency install (`npm ci`)
-- Runs `npm ci` with logs captured to temp file.
+### 3.1 Dependency install (`pnpm install`)
+- Runs `pnpm install` with logs captured to temp file.
 - On failure, prints last 10 lines + full log path.
 - Detects common error patterns and prints targeted troubleshooting:
   - permission errors
@@ -146,15 +146,15 @@ The installer resolves a target ref before clone/update:
   - dependency resolve conflicts
 
 ### 3.2 Client build
-- Runs `npm run build`.
+- Runs `pnpm run build`.
 - On failure: prints last 10 log lines + full path + hints.
 
 ### 3.3 Server build
-- Runs `npm run build:server`.
+- Runs `pnpm run build:server`.
 - On failure: same structured diagnostics.
 
 ### 3.4 Temp log cleanup
-- Deletes npm/build temp log files on success.
+- Deletes pnpm/build temp log files on success.
 
 ### 3.5 Local speech model bootstrap
 - Resolves target model from `.env` `WHISPER_MODEL` (defaults to `base`).
@@ -200,7 +200,7 @@ If token missing, it warns and sets `ENV_MISSING=true`.
 #### Interactive mode (no `--skip-setup`)
 - If `.env` exists:
   - ask: “Run setup wizard anyway?”
-  - if yes: run `NERVE_INSTALLER=1 npm run setup`
+  - if yes: run `NERVE_INSTALLER=1 pnpm run setup`
   - if no: keep existing config
 - If no `.env`:
   - run setup wizard

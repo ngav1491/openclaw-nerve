@@ -1,5 +1,5 @@
 /**
- * Prerequisite checker — verifies Node.js version, npm, ffmpeg, openssl.
+ * Prerequisite checker — verifies Node.js version, pnpm, ffmpeg, openssl.
  */
 
 import { execSync } from 'node:child_process';
@@ -8,7 +8,7 @@ import { success, warn, fail } from './banner.js';
 export interface PrereqResult {
   nodeOk: boolean;
   nodeVersion: string;
-  npmOk: boolean;
+  pnpmOk: boolean;
   ffmpegOk: boolean;
   opensslOk: boolean;
   tailscaleOk: boolean;
@@ -30,10 +30,10 @@ export function checkPrerequisites(opts?: { quiet?: boolean }): PrereqResult {
     else fail(`Node.js ${nodeVersion} — version 22 or later is required`);
   }
 
-  const npmOk = commandExists('npm');
+  const pnpmOk = commandExists('pnpm');
   if (!quiet) {
-    if (npmOk) success('npm available');
-    else fail('npm not found');
+    if (pnpmOk) success('pnpm available');
+    else fail('pnpm not found — install with: npm install -g pnpm');
   }
 
   const ffmpegOk = commandExists('ffmpeg');
@@ -60,7 +60,7 @@ export function checkPrerequisites(opts?: { quiet?: boolean }): PrereqResult {
     }
   }
 
-  return { nodeOk, nodeVersion, npmOk, ffmpegOk, opensslOk, tailscaleOk, tailscaleIp };
+  return { nodeOk, nodeVersion, pnpmOk, ffmpegOk, opensslOk, tailscaleOk, tailscaleIp };
 }
 
 /** Check if a command exists on the system. */

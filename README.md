@@ -96,15 +96,15 @@ The installer handles dependencies, cloning, building, and launching. It runs a 
 ```bash
 git clone https://github.com/daggerhashimoto/openclaw-nerve.git
 cd openclaw-nerve
-npm install
-npm run setup    # interactive wizard — configures .env
-npm run prod     # builds and starts the server
+pnpm install
+pnpm run setup    # interactive wizard — configures .env
+pnpm run prod     # builds and starts the server
 ```
 
 ### Updating
 
 ```bash
-npm run update -- --yes
+pnpm run update -- --yes
 ```
 
 Fetches the latest release, rebuilds, restarts, and verifies health. Auto-rolls back on failure. See [docs/UPDATING.md](docs/UPDATING.md) for flags and details.
@@ -112,8 +112,8 @@ Fetches the latest release, rebuilds, restarts, and verifies health. Auto-rolls 
 ### Development
 
 ```bash
-npm run dev            # frontend — Vite HMR on :3080
-npm run dev:server     # backend — watch mode on :3081
+pnpm run dev            # frontend — Vite HMR on :3080
+pnpm run dev:server     # backend — watch mode on :3081
 ```
 
 **Requires:** Node.js 22+ and an [OpenClaw](https://github.com/openclaw/openclaw) gateway.

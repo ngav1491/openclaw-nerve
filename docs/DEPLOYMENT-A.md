@@ -28,7 +28,7 @@ If `.env` is missing or wrong:
 
 ```bash
 cd ~/nerve
-npm run setup
+pnpm run setup
 ```
 
 Recommended choices:
@@ -42,7 +42,7 @@ Recommended choices:
 sudo systemctl restart nerve.service
 
 # or run directly
-npm run prod
+pnpm run prod
 ```
 
 ## Validation
@@ -61,13 +61,13 @@ All three should succeed. Open `http://localhost:3080` in your browser.
 
 After an OpenClaw update or re-onboard, the connect dialog may fail with auth errors.
 
-**Fix:** Re-run `npm run setup`, restart both services, and open a fresh browser tab.
+**Fix:** Re-run `pnpm run setup`, restart both services, and open a fresh browser tab.
 
 ### Missing scopes after first connect
 
 Chat connects but actions fail with "missing scope" errors.
 
-**Fix:** Re-run `npm run setup`, or manually approve the device:
+**Fix:** Re-run `pnpm run setup`, or manually approve the device:
 
 ```bash
 openclaw devices list

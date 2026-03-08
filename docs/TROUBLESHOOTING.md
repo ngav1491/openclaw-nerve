@@ -15,7 +15,7 @@ Common issues and solutions for Nerve.
 2. You're trying the gateway token but `GATEWAY_TOKEN` isn't set in `.env`
 
 **Fix:**
-- Re-run `npm run setup` to set a new password
+- Re-run `pnpm run setup` to set a new password
 - Or set `NERVE_AUTH=true` with a valid `GATEWAY_TOKEN` — the gateway token works as a fallback password without needing a password hash
 
 ### Session expired / redirected to login
@@ -72,16 +72,16 @@ echo "NERVE_AUTH=false" >> .env
 }
 ```
 
-### `npm run build:server` produces nothing
+### `pnpm run build:server` produces nothing
 
-**Symptom:** `server-dist/` is empty or `npm start` fails with "Cannot find module".
+**Symptom:** `server-dist/` is empty or `pnpm start` fails with "Cannot find module".
 
 **Cause:** Server TypeScript is compiled separately via `tsc -p config/tsconfig.server.json`.
 
 **Fix:**
 ```bash
-npm run build:server   # Compiles server/ → server-dist/
-npm start              # Then runs node server-dist/index.js
+pnpm run build:server   # Compiles server/ → server-dist/
+pnpm start              # Then runs node server-dist/index.js
 ```
 
 ### Chunk size warnings during `vite build`
@@ -101,7 +101,7 @@ npm start              # Then runs node server-dist/index.js
 # Find what's using the port
 lsof -i :3080
 # Kill it, or use a different port:
-PORT=3090 npm start
+PORT=3090 pnpm start
 ```
 
 The server detects `EADDRINUSE` and exits with a clear error (see `server/index.ts`).
@@ -185,7 +185,7 @@ rm ~/.nerve/device-identity.json
 
 **Fix:** By default, only `127.0.0.1`, `localhost`, and `::1` are allowed. To add a custom host:
 ```bash
-WS_ALLOWED_HOSTS=mygateway.local npm start
+WS_ALLOWED_HOSTS=mygateway.local pnpm start
 ```
 
 ### "device token mismatch" on WebSocket connect
@@ -202,7 +202,7 @@ Close the tab completely and open a fresh one (or use incognito). `sessionStorag
 **Fix (token mismatch):**
 Re-run the setup wizard — it reads the real token from the systemd service file and aligns everything:
 ```bash
-npm run setup
+pnpm run setup
 ```
 
 If you need to check manually:
@@ -223,7 +223,7 @@ grep GATEWAY_TOKEN .env                                 # Nerve config
 1. The device hasn't been approved yet (first connection)
 2. The device was rejected or the gateway was reset
 
-**Fix:** Re-run `npm run setup` — it bootstraps device scopes automatically. If that doesn't work:
+**Fix:** Re-run `pnpm run setup` — it bootstraps device scopes automatically. If that doesn't work:
 ```bash
 # Check pending devices
 openclaw devices list
@@ -511,7 +511,7 @@ The server auto-detects cert files at `certs/cert.pem` and `certs/key.pem`. No c
 
 ## Development
 
-### `npm run dev` — proxy errors
+### `pnpm run dev` — proxy errors
 
 **Symptom:** API requests fail with 502 during development.
 
@@ -520,10 +520,10 @@ The server auto-detects cert files at `certs/cert.pem` and `certs/key.pem`. No c
 **Fix:** Run both servers:
 ```bash
 # Terminal 1
-npm run dev:server   # Backend on port 3081
+pnpm run dev:server   # Backend on port 3081
 
 # Terminal 2
-npm run dev          # Frontend on port 3080 (proxies to 3081)
+pnpm run dev          # Frontend on port 3080 (proxies to 3081)
 ```
 
 ### Tests fail with "Cannot find module"
@@ -554,7 +554,7 @@ See [docs/UPDATING.md](UPDATING.md) for the full updater reference.
 
 ### "No semver tags found on remote"
 
-**Symptom:** `npm run update` fails at version resolution (exit 20).
+**Symptom:** `pnpm run update` fails at version resolution (exit 20).
 
 **Cause:** No tags on the remote, or git can't reach origin.
 
@@ -598,7 +598,7 @@ curl http://127.0.0.1:3080/api/version   # Verify version
 ```bash
 cat ~/.nerve/updater/last-good.json       # Get snapshot ref
 git checkout --force <ref>
-npm install && npm run build && npm run build:server
+pnpm install && pnpm run build && pnpm run build:server
 systemctl restart nerve
 ```
 

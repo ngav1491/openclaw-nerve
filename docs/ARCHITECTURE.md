@@ -400,15 +400,15 @@ Applied in order in `app.ts`:
 
 ### Updater (`server/lib/updater/`)
 
-Self-update system invoked via `npm run update` (entrypoint: `bin/nerve-update.ts` → `bin-dist/bin/nerve-update.js`).
+Self-update system invoked via `pnpm run update` (entrypoint: `bin/nerve-update.ts` → `bin-dist/bin/nerve-update.js`).
 
 | File | Purpose |
 |------|---------|
 | `orchestrator.ts` | State machine: lock → preflight → resolve → snapshot → update → build → restart → health → rollback |
-| `preflight.ts` | Validates git, Node.js, npm versions and git repo state |
+| `preflight.ts` | Validates git, Node.js, pnpm versions and git repo state |
 | `release-resolver.ts` | Finds latest semver tag via `git ls-remote --tags`, falls back to local tags |
 | `snapshot.ts` | Saves current git ref, version, and `.env` backup to `~/.nerve/updater/` |
-| `installer.ts` | `git fetch + checkout --force`, `npm install`, `npm run build + build:server` |
+| `installer.ts` | `git fetch + checkout --force`, `pnpm install`, `pnpm run build + build:server` |
 | `service-manager.ts` | Auto-detects systemd or launchd, provides restart/status/logs |
 | `health.ts` | Polls `/health` and `/api/version` with exponential backoff (60s deadline) |
 | `rollback.ts` | Restores snapshot ref, clean rebuilds, restarts service |
@@ -610,8 +610,8 @@ Backend polling for each running task is independent -- each `executeTask` call 
 ### Development
 
 ```bash
-npm run dev          # Vite dev server (frontend) — port 3080
-npm run dev:server   # tsx watch (backend) — port 3081
+pnpm run dev          # Vite dev server (frontend) — port 3080
+pnpm run dev:server   # tsx watch (backend) — port 3081
 ```
 
 Vite proxies `/api` and `/ws` to the backend dev server.
@@ -619,11 +619,11 @@ Vite proxies `/api` and `/ws` to the backend dev server.
 ### Production
 
 ```bash
-npm run prod         # Builds frontend + backend, then starts
+pnpm run prod         # Builds frontend + backend, then starts
 # Equivalent to:
-npm run build        # tsc -b && vite build → dist/
-npm run build:server # tsc -p config/tsconfig.server.json → server-dist/
-npm start            # node server-dist/index.js
+pnpm run build        # tsc -b && vite build → dist/
+pnpm run build:server # tsc -p config/tsconfig.server.json → server-dist/
+pnpm start            # node server-dist/index.js
 ```
 
 ### Vite Configuration
@@ -649,8 +649,8 @@ Project references with four configs:
 **Framework:** Vitest with jsdom environment for React tests.
 
 ```bash
-npm test              # Run all tests
-npm run test:coverage # With V8 coverage
+pnpm test              # Run all tests
+pnpm run test:coverage # With V8 coverage
 ```
 
 ### Test Files

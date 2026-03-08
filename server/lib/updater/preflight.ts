@@ -15,7 +15,7 @@ const NODE_MIN_MAJOR = 22;
 export function runPreflight(cwd: string): PreflightResult {
   const gitVersion = requireCommand('git --version', 'git').replace('git version ', '').trim();
   const nodeVersionRaw = requireCommand('node --version', 'node').trim();
-  const npmVersion = requireCommand('npm --version', 'npm').trim();
+  const pnpmVersion = requireCommand('pnpm --version', 'pnpm').trim();
 
   // Validate Node.js version
   const nodeVersion = nodeVersionRaw.replace(/^v/, '');
@@ -72,7 +72,7 @@ export function runPreflight(cwd: string): PreflightResult {
   return {
     gitVersion,
     nodeVersion,
-    npmVersion,
+    pnpmVersion,
     isGitRepo: true,
     hasWritePermission: true,
   };

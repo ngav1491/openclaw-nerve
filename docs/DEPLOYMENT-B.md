@@ -34,7 +34,7 @@ curl -sS http://127.0.0.1:18789/health
 
 ```bash
 cd ~/nerve
-npm run setup
+pnpm run setup
 ```
 
 When prompted:

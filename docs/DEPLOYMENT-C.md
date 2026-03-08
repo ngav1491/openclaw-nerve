@@ -37,7 +37,7 @@ curl -fsSL https://raw.githubusercontent.com/daggerhashimoto/openclaw-nerve/mast
 
 ```bash
 cd ~/nerve
-npm run setup
+pnpm run setup
 ```
 
 Recommended choices:
