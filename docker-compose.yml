@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  nerve:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: openclaw-nerve:pnpm
+    container_name: openclaw-nerve
+    restart: unless-stopped
+    ports:
+      - "3080:3080"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3080
+      HOME: /data
+      MEMORY_PATH: /data/.openclaw/workspace/MEMORY.md
+      MEMORY_DIR: /data/.openclaw/workspace/memory
+      SESSIONS_DIR: /data/.openclaw/agents/main/sessions
+      USAGE_FILE: /data/.openclaw/token-usage.json
+      WHISPER_MODEL_DIR: /data/.nerve/models
+    volumes:
+      - nerve_data:/data
+      - ./certs:/app/certs:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  nerve_data:
