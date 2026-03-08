@@ -30,6 +30,7 @@ export async function invokeGatewayTool(
   tool: string,
   args: Record<string, unknown>,
   timeoutMs = DEFAULT_TIMEOUT_MS,
+  sessionKey = 'main',
 ): Promise<unknown> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (GATEWAY_TOKEN) headers['Authorization'] = `Bearer ${GATEWAY_TOKEN}`;
@@ -37,7 +38,7 @@ export async function invokeGatewayTool(
   const response = await fetch(`${GATEWAY_URL}/tools/invoke`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ tool, args, sessionKey: 'main' }),
+    body: JSON.stringify({ tool, args, sessionKey }),
     signal: AbortSignal.timeout(timeoutMs),
   });
 

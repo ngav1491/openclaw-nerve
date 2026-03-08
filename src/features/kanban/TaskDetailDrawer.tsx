@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { KanbanTask, TaskStatus, TaskPriority } from './types';
 import type { UpdateTaskPayload, VersionConflictError } from './hooks/useKanban';
+import { useAgents, type AgentOption } from './hooks/useAgents';
 
 /* ── Priority colors ── */
 const PRIORITY_COLOR: Record<TaskPriority, string> = {
@@ -83,6 +84,7 @@ export function TaskDetailDrawer({ task, onClose, onUpdate, onDelete, onExecute,
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const { data: agentOptions = [] } = useAgents();
 
   /* Populate fields when task changes */
   useEffect(() => {
@@ -382,17 +384,21 @@ export function TaskDetailDrawer({ task, onClose, onUpdate, onDelete, onExecute,
                   <label htmlFor="kb-assignee" className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">
                     <User size={10} className="inline mr-1" />Assignee
                   </label>
-                  <Input
+                  <select
                     id="kb-assignee"
                     value={editAssignee}
                     onChange={e => { setEditAssignee(e.target.value); markDirty(); }}
-                    placeholder="operator"
-                    className="h-[34px]"
-                  />
+                    className={selectClass}
+                  >
+                    <option value="">None</option>
+                    {agentOptions.map((o: AgentOption) => (
+                      <option key={o.value} value={o.value}>
+                        {o.emoji ? `${o.emoji} ${o.label}` : o.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
-
-              {/* Metadata (read-only) */}
               <div className="border-t border-border/50 pt-3">
                 <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                   Metadata

@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { TaskStatus, TaskPriority } from './types';
 import type { CreateTaskPayload } from './hooks/useKanban';
+import { useAgents, type AgentOption } from './hooks/useAgents';
 
 const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
   { value: 'backlog', label: 'Backlog' },
@@ -43,6 +44,7 @@ export function CreateTaskDialog({ open, onOpenChange, onCreate }: CreateTaskDia
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const titleRef = useRef<HTMLInputElement>(null);
+  const { data: agentOptions = [] } = useAgents();
 
   /* Focus title on open */
   useEffect(() => {
@@ -208,14 +210,22 @@ export function CreateTaskDialog({ open, onOpenChange, onCreate }: CreateTaskDia
             <label htmlFor="kb-new-assignee" className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">
               Assignee
             </label>
-            <Input
+            <select
               id="kb-new-assignee"
               value={assignee}
               onChange={e => setAssignee(e.target.value)}
-              placeholder="operator"
-              className="h-[34px]"
-            />
+              className={selectClass}
+            >
+              <option value="">None</option>
+              {agentOptions.map((o: AgentOption) => (
+                <option key={o.value} value={o.value}>
+                  {o.emoji ? `${o.emoji} ${o.label}` : o.label}
+                </option>
+              ))}
+            </select>
           </div>
+
+
         </div>
 
         <DialogFooter className="mt-1">
