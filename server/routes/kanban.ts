@@ -75,6 +75,8 @@ function pollSessionCompletion(
   store: ReturnType<typeof getKanbanStore>,
   taskId: string,
   label: string,
+  gatewaySessionKey: string,
+  assignee: TaskActor = 'operator',
   intervalMs = 5_000,
   maxAttempts = 720, // 60 minutes max
 ): void {
@@ -93,7 +95,7 @@ function pollSessionCompletion(
       const task = await store.getTask(taskId).catch(() => null);
       if (!task || task.status !== 'in-progress') return; // task was moved/aborted, stop
 
-      const raw = await invokeGatewayTool('subagents', { action: 'list', recentMinutes: 120 });
+      const raw = await invokeGatewayTool('subagents', { action: 'list', recentMinutes: 120 }, undefined, gatewaySessionKey);
       const parsed = parseGatewayResponse(raw);
 
       // subagents list returns { active: [...], recent: [...] }
@@ -120,7 +122,7 @@ function pollSessionCompletion(
           const histRaw = await invokeGatewayTool('sessions_history', {
             sessionKey: match.sessionKey,
             limit: 3,
-          });
+          }, undefined, gatewaySessionKey);
           const histParsed = parseGatewayResponse(histRaw);
           const messages = (histParsed.messages ?? []) as Array<Record<string, unknown>>;
           const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
@@ -144,8 +146,8 @@ function pollSessionCompletion(
             await store.createProposal({
               type: marker.type,
               payload: marker.payload,
-              sourceSessionKey: label,
-              proposedBy: `agent:${label}`,
+              sourceSessionKey: String(match.sessionKey ?? label),
+              proposedBy: assignee,
             });
           } catch (err) {
             console.warn(`[kanban] Failed to create proposal from marker:`, err);
@@ -727,10 +729,11 @@ app.post('/api/kanban/tasks/:id/execute', rateLimitGeneral, async (c) => {
 
     // Spawn agent session via gateway (fire-and-forget)
     const taskDescription = task.description || task.title;
+    const runLabel = task.run?.sessionKey || `kb-${id}`;
     const spawnArgs: Record<string, unknown> = {
       task: `You are working on a Kanban task.\n\nTitle: ${task.title}\n\nDescription: ${taskDescription}\n\nDeliver your result as a clear summary of what was done.`,
       mode: 'run',
-      label: `kb-${id}`,
+      label: runLabel,
     };
     // Use task's model, or board default. If neither is set, omit — OpenClaw
     // will use whatever default model the operator configured in openclaw.json.
@@ -740,12 +743,32 @@ app.post('/api/kanban/tasks/:id/execute', rateLimitGeneral, async (c) => {
     const thinking = task.thinking || config.defaultThinking;
     if (thinking) spawnArgs.thinking = thinking;
 
-    const runLabel = `kb-${id}`;
     const spawnSessionKey = deriveSpawnSessionKey(task.assignee);
     invokeGatewayTool('sessions_spawn', spawnArgs, undefined, spawnSessionKey)
-      .then(() => {
+      .then(async (spawnRaw) => {
+        const spawnParsed = parseGatewayResponse(spawnRaw);
+        const childSessionKey = typeof spawnParsed.childSessionKey === 'string'
+          ? spawnParsed.childSessionKey
+          : undefined;
+
+        if (childSessionKey && task.run && childSessionKey !== task.run.sessionKey) {
+          try {
+            const latest = await store.getTask(id);
+            if (latest.run && latest.run.status === 'running') {
+              await store.updateTask(id, latest.version, {
+                run: {
+                  ...latest.run,
+                  sessionKey: childSessionKey,
+                },
+              }, 'operator');
+            }
+          } catch (err) {
+            console.warn(`[kanban] Failed to persist child session key for task ${id}:`, err);
+          }
+        }
+
         // Poll for session completion in the background
-        pollSessionCompletion(store, id, runLabel);
+        pollSessionCompletion(store, id, runLabel, spawnSessionKey, task.assignee ?? 'operator');
       })
       .catch((err) => {
         console.error(`[kanban] Failed to spawn session for task ${id}:`, err);
