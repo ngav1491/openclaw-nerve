@@ -5,6 +5,7 @@ import type { TaskStatus, TaskPriority } from './types';
 import type { KanbanFilters } from './hooks/useKanban';
 import { ProposalInbox } from './ProposalInbox';
 import type { KanbanProposal } from './hooks/useProposals';
+import { useAgents, type AgentOption } from './hooks/useAgents';
 
 /* ── Stats chip ── */
 function StatChip({ label, count, accent }: { label: string; count: number; accent: string }) {
@@ -37,6 +38,25 @@ function FilterPill({
     >
       {label}
     </button>
+  );
+}
+
+/* ── Assignee filter dropdown ── */
+function AssigneeFilter({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { data: agentOptions = [] } = useAgents();
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className={`h-6 px-2 text-[10px] font-semibold rounded-full border transition-colors cursor-pointer bg-transparent text-muted-foreground border-border/60 hover:text-foreground hover:border-muted-foreground outline-none ${value ? 'bg-primary/20 text-primary border-primary/40' : ''}`}
+    >
+      <option value="">All</option>
+      {agentOptions.map((o: AgentOption) => (
+        <option key={o.value} value={o.value}>
+          {o.emoji ? `${o.emoji} ${o.label}` : o.label}
+        </option>
+      ))}
+    </select>
   );
 }
 
@@ -212,6 +232,14 @@ export const KanbanHeader = memo(function KanbanHeader({
               onClick={() => togglePriority(p)}
             />
           ))}
+
+          <span className="mx-1 h-4 border-l border-border/50" />
+
+          <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Assignee:</span>
+          <AssigneeFilter
+            value={filters.assignee}
+            onChange={val => onFiltersChange({ ...filters, assignee: val })}
+          />
 
           {hasActiveFilters && (
             <button

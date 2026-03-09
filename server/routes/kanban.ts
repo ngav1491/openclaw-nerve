@@ -683,6 +683,18 @@ function handleWorkflowError(c: Context, err: unknown) {
   throw err;
 }
 
+function deriveSpawnSessionKey(assignee?: TaskActor): string {
+  if (assignee && assignee !== 'operator' && assignee.startsWith('agent:')) {
+    const suffix = assignee.slice('agent:'.length).trim();
+    if (suffix.length > 0) {
+      // OpenClaw session keys use agent:<id>:main for primary thread
+      if (suffix.includes(':')) return `agent:${suffix}`;
+      return `agent:${suffix}:main`;
+    }
+  }
+  return 'main';
+}
+
 // POST /api/kanban/tasks/:id/execute
 app.post('/api/kanban/tasks/:id/execute', rateLimitGeneral, async (c) => {
   const store = getKanbanStore();
@@ -729,7 +741,8 @@ app.post('/api/kanban/tasks/:id/execute', rateLimitGeneral, async (c) => {
     if (thinking) spawnArgs.thinking = thinking;
 
     const runLabel = `kb-${id}`;
-    invokeGatewayTool('sessions_spawn', spawnArgs)
+    const spawnSessionKey = deriveSpawnSessionKey(task.assignee);
+    invokeGatewayTool('sessions_spawn', spawnArgs, undefined, spawnSessionKey)
       .then(() => {
         // Poll for session completion in the background
         pollSessionCompletion(store, id, runLabel);

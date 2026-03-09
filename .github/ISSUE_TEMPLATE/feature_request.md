@@ -3,7 +3,7 @@ name: Feature Request
 about: Got an idea? We're listening.
 title: "[Feature] "
 labels: enhancement
-assignees: ""
+assignees: "agent:triage"
 ---
 
 ## Problem

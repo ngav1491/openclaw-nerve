@@ -7,6 +7,7 @@ import os from 'node:os';
 import type { KanbanTask } from '../lib/kanban-store.js';
 
 let tmpDir: string;
+type InvokeGatewayMock = ReturnType<typeof vi.fn>;
 
 beforeEach(async () => {
   vi.resetModules();
@@ -18,15 +19,16 @@ afterEach(async () => {
   await fs.promises.rm(tmpDir, { recursive: true, force: true });
 });
 
-async function buildApp(): Promise<Hono> {
+async function buildApp(invokeGatewayToolMock?: InvokeGatewayMock): Promise<Hono> {
   // Mock rate-limit to be a no-op for tests
   vi.doMock('../middleware/rate-limit.js', () => ({
     rateLimitGeneral: vi.fn((_c: unknown, next: () => Promise<void>) => next()),
   }));
 
   // Mock gateway client so fire-and-forget spawn doesn't interfere with test cleanup
+  const gatewayMock = invokeGatewayToolMock ?? vi.fn(() => Promise.resolve({ childSessionKey: 'test-session' }));
   vi.doMock('../lib/gateway-client.js', () => ({
-    invokeGatewayTool: vi.fn(() => Promise.resolve({ childSessionKey: 'test-session' })),
+    invokeGatewayTool: gatewayMock,
   }));
 
   // Create store from the re-imported module so instanceof checks work
@@ -595,6 +597,48 @@ describe('POST /api/kanban/tasks/:id/execute', () => {
       body: '{bad',
     });
     expect(res.status).toBe(400);
+  });
+
+  it('routes spawn to agent session when assignee is agent:<id>', async () => {
+    const invokeGatewayTool = vi.fn(() => Promise.resolve({ childSessionKey: 'test-session' }));
+    const app = await buildApp(invokeGatewayTool);
+    const task = await createTask(app, { status: 'todo', assignee: 'agent:main' });
+
+    const res = await app.request(`/api/kanban/tasks/${task.id}/execute`, json({}));
+    expect(res.status).toBe(200);
+
+    const calls = invokeGatewayTool.mock.calls as unknown[][];
+    const spawnCall = calls.find((call) => call[0] === 'sessions_spawn');
+    expect(spawnCall).toBeDefined();
+    expect(spawnCall?.[3]).toBe('agent:main:main');
+  });
+
+  it('keeps fully-qualified assignee session key unchanged', async () => {
+    const invokeGatewayTool = vi.fn(() => Promise.resolve({ childSessionKey: 'test-session' }));
+    const app = await buildApp(invokeGatewayTool);
+    const task = await createTask(app, { status: 'todo', assignee: 'agent:main:main' });
+
+    const res = await app.request(`/api/kanban/tasks/${task.id}/execute`, json({}));
+    expect(res.status).toBe(200);
+
+    const calls = invokeGatewayTool.mock.calls as unknown[][];
+    const spawnCall = calls.find((call) => call[0] === 'sessions_spawn');
+    expect(spawnCall).toBeDefined();
+    expect(spawnCall?.[3]).toBe('agent:main:main');
+  });
+
+  it('uses operator session when assignee is operator', async () => {
+    const invokeGatewayTool = vi.fn(() => Promise.resolve({ childSessionKey: 'test-session' }));
+    const app = await buildApp(invokeGatewayTool);
+    const task = await createTask(app, { status: 'todo', assignee: 'operator' });
+
+    const res = await app.request(`/api/kanban/tasks/${task.id}/execute`, json({}));
+    expect(res.status).toBe(200);
+
+    const calls = invokeGatewayTool.mock.calls as unknown[][];
+    const spawnCall = calls.find((call) => call[0] === 'sessions_spawn');
+    expect(spawnCall).toBeDefined();
+    expect(spawnCall?.[3]).toBe('main');
   });
 });
 
