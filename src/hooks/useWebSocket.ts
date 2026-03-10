@@ -20,9 +20,6 @@ interface UseWebSocketReturn {
 
 const RECONNECT_BASE_DELAY = 1000;
 const RECONNECT_MAX_DELAY = 30000;
-// Keep retrying indefinitely. Laptops sleep/wake and network outages can exceed
-// 10 minutes; giving up causes "live updates stalled" until manual reconnect.
-const RECONNECT_MAX_ATTEMPTS = Number.POSITIVE_INFINITY;
 const INSTANCE_ID_STORAGE_KEY = 'oc-webchat-instance-id';
 
 function generateInstanceId(): string {
@@ -197,6 +194,7 @@ export function useWebSocket(): UseWebSocketReturn {
               const errMsg = 'Auth failed: ' + (response.error?.message || 'unknown');
               setConnectError(errMsg);
               setConnectionState('disconnected');
+              intentionalDisconnectRef.current = true; // prevent reconnect on auth failure
               ws.close();
               connectRejectRef.current?.(new Error(errMsg));
             }
@@ -243,12 +241,6 @@ export function useWebSocket(): UseWebSocketReturn {
         // Attempt auto-reconnect
         const attempt = ++reconnectAttemptRef.current;
         setReconnectAttempt(attempt);
-
-        if (attempt > RECONNECT_MAX_ATTEMPTS) {
-          setConnectError('Reconnect failed after ' + RECONNECT_MAX_ATTEMPTS + ' attempts');
-          setConnectionState('disconnected');
-          return;
-        }
 
         // Exponential backoff with jitter
         const delay = Math.min(
