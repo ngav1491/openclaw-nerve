@@ -12,13 +12,15 @@ import type { HealthResult } from './types.js';
 const BACKOFFS = [2_000, 4_000, 8_000];
 const TOTAL_TIMEOUT = 60_000;
 const REQUEST_TIMEOUT = 5_000;
+const DEFAULT_PORT = 3080;
+const DEFAULT_HOST = '127.0.0.1';
 
 /**
  * Check that the server is healthy and reports the expected version.
  */
 export async function checkHealth(cwd: string, targetVersion: string): Promise<HealthResult> {
   const port = readPort(cwd);
-  const baseUrl = `http://127.0.0.1:${port}`;
+  const baseUrl = resolveHealthCheckBaseUrl(cwd);
   const deadline = Date.now() + TOTAL_TIMEOUT;
 
   let lastHealthy = false;
@@ -45,14 +47,14 @@ export async function checkHealth(cwd: string, targetVersion: string): Promise<H
         return { healthy: true, versionMatch: true, reportedVersion: data.version };
       }
 
-      // Version mismatch — stale process may still be serving, keep retrying
+      // Version mismatch, stale process may still be serving, keep retrying
       continue;
     } catch {
       continue;
     }
   }
 
-  // Deadline expired — report what we last saw
+  // Deadline expired, report what we last saw
   if (lastHealthy && lastReportedVersion) {
     return {
       healthy: true,
@@ -65,22 +67,58 @@ export async function checkHealth(cwd: string, targetVersion: string): Promise<H
   return {
     healthy: false,
     versionMatch: false,
-    error: `Health check timed out after ${TOTAL_TIMEOUT / 1_000}s (port ${port})`,
+    error: `Health check timed out after ${TOTAL_TIMEOUT / 1_000}s (${baseUrl})`,
   };
+}
+
+export function resolveHealthCheckBaseUrl(cwd: string): string {
+  const host = resolveProbeHost(readHost(cwd));
+  const port = readPort(cwd);
+  return `http://${formatHostForUrl(host)}:${port}`;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
 function readPort(cwd: string): number {
+  const rawPort = process.env.PORT ?? readEnvValue(cwd, 'PORT');
+  if (!rawPort) return DEFAULT_PORT;
+
+  const port = Number.parseInt(rawPort, 10);
+  return Number.isFinite(port) ? port : DEFAULT_PORT;
+}
+
+function readHost(cwd: string): string {
+  return process.env.HOST ?? readEnvValue(cwd, 'HOST') ?? DEFAULT_HOST;
+}
+
+function readEnvValue(cwd: string, key: string): string | undefined {
   const envPath = join(cwd, '.env');
-  if (existsSync(envPath)) {
-    const content = readFileSync(envPath, 'utf-8');
-    for (const line of content.split('\n')) {
-      const match = /^PORT=(\d+)/.exec(line.trim());
-      if (match) return parseInt(match[1], 10);
-    }
+  if (!existsSync(envPath)) return undefined;
+
+  const content = readFileSync(envPath, 'utf-8');
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+
+    const match = new RegExp(`^${key}=(.*)$`).exec(trimmed);
+    if (match) return match[1].trim();
   }
-  return 3080;
+
+  return undefined;
+}
+
+function resolveProbeHost(host: string): string {
+  const normalized = host.trim();
+  if (!normalized || normalized === '0.0.0.0') return '127.0.0.1';
+  if (normalized === '::' || normalized === '[::]') return '::1';
+  return normalized;
+}
+
+function formatHostForUrl(host: string): string {
+  if (host.includes(':') && !host.startsWith('[')) {
+    return `[${host}]`;
+  }
+  return host;
 }
 
 function httpGet(

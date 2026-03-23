@@ -14,7 +14,7 @@ import { resolveVersion } from './release-resolver.js';
 import { createSnapshot } from './snapshot.js';
 import { gitFetchAndCheckout, buildProject } from './installer.js';
 import { detectServiceManager } from './service-manager.js';
-import { checkHealth } from './health.js';
+import { checkHealth, resolveHealthCheckBaseUrl } from './health.js';
 import { rollback } from './rollback.js';
 import { EXIT_CODES, UpdateError } from './types.js';
 import type { UpdateOptions, Reporter, ExitCode, ServiceManager } from './types.js';
@@ -154,7 +154,8 @@ export async function orchestrate(options: UpdateOptions, reporter: Reporter): P
       stageNum++;
       reporter.stage('Health check', stageNum, totalStages);
       if (serviceManager) {
-        reporter.verbose('Polling /health and /api/version...');
+        const healthBaseUrl = resolveHealthCheckBaseUrl(options.cwd);
+        reporter.verbose(`Polling ${healthBaseUrl}/health and ${healthBaseUrl}/api/version...`);
         const health = await checkHealth(options.cwd, resolved.version);
 
         if (!health.healthy || !health.versionMatch) {
