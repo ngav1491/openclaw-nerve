@@ -91,6 +91,7 @@ export function gatewayRpcCall(
     }
 
     ws.on('open', () => {
+      console.log(`[gateway-rpc] Connected to ${wsUrl}, sending connect...`);
       // Step 1: Send connect with auth token
       const connectMsg = {
         type: 'req',
@@ -118,9 +119,17 @@ export function gatewayRpcCall(
 
       try {
         const msg = JSON.parse(data.toString());
+        console.log(`[gateway-rpc] << type=${msg.type} method=${msg.method || ''} event=${msg.event || ''} id=${(msg.id || '').toString().slice(0,8)} ok=${msg.ok ?? ''}`);
 
         // Wait for connect response before sending the RPC call
-        if (msg.type === 'res' && msg.method === 'connect') {
+        if (msg.type === 'res' && (msg.method === 'connect' || msg.id === connectMsg.id)) {
+          console.log(`[gateway-rpc] Connect response: ok=${msg.ok}`, msg.ok ? '' : JSON.stringify(msg.error || msg));
+          if (!msg.ok) {
+            settled = true;
+            cleanup();
+            reject(new Error(`Gateway connect failed: ${JSON.stringify(msg.error || msg)}`));
+            return;
+          }
           // Connected — now send the actual RPC request
           ws.send(JSON.stringify({
             type: 'req',
@@ -150,6 +159,10 @@ export function gatewayRpcCall(
       } catch {
         // Ignore parse errors on other messages
       }
+    });
+
+    ws.on('unexpected-response', (_req, res) => {
+      console.error(`[gateway-rpc] Unexpected HTTP response: ${res.statusCode} ${res.statusMessage}`);
     });
 
     ws.on('error', (err) => {
